@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jadwal Sholat | SholatTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── DARK (default) ── */
+    :root {
+      --bg:        #0D0F0E;
+      --surface:   #141918;
+      --border:    #232B26;
+      --gold:      #C8A96E;
+      --gold-dim:  #8A7249;
+      --text:      #F0EDE6;
+      --muted:     #6B7570;
+      --next-glow: rgba(200,169,110,0.12);
+    }
+
+    /* ── LIGHT ── */
+    :root.light {
+      --bg:        #F7F5F0;
+      --surface:   #FFFFFF;
+      --border:    #E4E0D8;
+      --gold:      #A0783A;
+      --gold-dim:  #C8A96E;
+      --text:      #1A1A18;
+      --muted:     #8A8680;
+      --next-glow: rgba(160,120,58,0.08);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.25s, color 0.25s;
+    }
+
+    /* ── HEADER ── */
+    header {
+      padding: 2rem 1.5rem 3rem;
+      max-width: 720px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+    }
+
+    .nav-left { display: flex; align-items: center; gap: 0.75rem; }
+
+    .logo {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--muted);
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .theme-toggle:hover { color: var(--gold); border-color: var(--gold-dim); }
+    .icon-sun  { display: none; }
+    .icon-moon { display: block; }
+    :root.light .icon-sun  { display: block; }
+    :root.light .icon-moon { display: none; }
+
+    .nav-logout {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.2s;
+    }
+    .nav-logout:hover { color: var(--text); }
+
+    .hero-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 6vw, 3.25rem);
+      font-weight: 900;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-date {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+
+    /* ── SEARCH ── */
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      max-width: 360px;
+      transition: border-color 0.2s, background 0.25s;
+    }
+    .search-wrap:focus-within { border-color: var(--gold-dim); }
+
+    .search-icon {
+      padding: 0 0.75rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    #city-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.75rem 0;
+      flex: 1;
+      min-width: 0;
+    }
+    #city-input::placeholder { color: var(--muted); font-weight: 400; }
+
+    .search-btn {
+      background: var(--gold);
+      color: #0D0F0E;
+      border: none;
+      padding: 0.75rem 1.25rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .search-btn:hover { opacity: 0.88; }
+
+    /* ── MAIN ── */
+    main {
+      flex: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 0 1.5rem 4rem;
+    }
+
+    /* Next prayer banner */
+    #next-banner {
+      background: var(--next-glow);
+      border: 1px solid rgba(200,169,110,0.2);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      transition: background 0.25s;
+    }
+    #next-banner.hidden { display: none; }
+
+    .next-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 0.2rem;
+    }
+    .next-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    #countdown {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+    }
+
+    /* Loader */
+    #loader {
+      text-align: center;
+      padding: 5rem 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      display: none;
+    }
+    #loader.visible { display: block; }
+
+    /* Prayer list */
+    #prayer-list { display: flex; flex-direction: column; }
+
+    .prayer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      transition: border-color 0.25s;
+    }
+    .prayer-item:first-child { border-top: 1px solid var(--border); }
+
+    .prayer-item.is-next::before {
+      content: '';
+      position: absolute;
+      left: -1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background: var(--gold);
+      border-radius: 2px;
+    }
+
+    .prayer-left { display: flex; align-items: center; gap: 1rem; }
+
+    .prayer-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      flex-shrink: 0;
+      transition: border-color 0.2s, color 0.2s, background 0.25s;
+    }
+    .prayer-item.is-next .prayer-icon { border-color: var(--gold-dim); color: var(--gold); }
+
+    .prayer-name {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.15rem;
+    }
+    .prayer-item.is-next .prayer-name { color: var(--gold-dim); }
+
+    .prayer-arabic {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .prayer-item.is-next .prayer-arabic { color: var(--gold); }
+
+    .prayer-time {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      transition: color 0.2s;
+    }
+    .prayer-item.is-next .prayer-time { color: var(--gold); }
+
+    .prayer-status {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 0.15rem;
+    }
+
+    /* Error */
+    #error-msg {
+      display: none;
+      text-align: center;
+      padding: 3rem 0;
+      color: #e07070;
+      font-size: 0.85rem;
+    }
+    #error-msg.visible { display: block; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      color: var(--muted);
+      transition: border-color 0.25s;
+    }
+    .footer-quote {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--gold-dim);
+      margin-bottom: 0.5rem;
+    }
+    footer small { font-size: 0.7rem; letter-spacing: 0.05em; }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <nav class="nav">
+    <div class="nav-left">
+      <span class="logo">SholatTrack</span>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Ganti tema" title="Ganti tema">
+        <!-- moon: shown in dark mode -->
+        <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <!-- sun: shown in light mode -->
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+    <a href="/logout" class="nav-logout">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Keluar
+    </a>
+  </nav>
+
+  <p class="hero-label">Jadwal Sholat Hari Ini</p>
+  <h1 class="hero-title">Waktu yang<br>Tepat untuk Sujud</h1>
+  <p class="hero-date" id="current-date">—</p>
+
+  <form onsubmit="event.preventDefault(); fetchPrayerTimes();" style="margin-top:1.5rem;">
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </span>
+      <input type="text" id="city-input" placeholder="Ketik nama kota..." value="Kendari" autocomplete="off" />
+      <button type="submit" class="search-btn">CEK</button>
+    </div>
+  </form>
+</header>
+
+<main>
+  <div id="next-banner" class="hidden">
+    <div>
+      <p class="next-label">Sholat Berikutnya</p>
+      <p class="next-name" id="next-name">—</p>
+    </div>
+    <div id="countdown">--:--:--</div>
+  </div>
+
+  <div id="loader">Mengambil jadwal sholat…</div>
+  <div id="error-msg"></div>
+  <div id="prayer-list"></div>
+</main>
+
+<footer>
+  <p class="footer-quote">"Jadikanlah sholat sebagai penolongmu dengan sabar dan sholat."</p>
+  <small>© 2026 SholatTrack — Menjaga Istiqomah Ibadah Anda</small>
+</footer>
+
+<script>
+  // ── Theme ──
+  function applyTheme(theme) {
+    if (theme === 'light') document.documentElement.classList.add('light');
+    else document.documentElement.classList.remove('light');
+    localStorage.setItem('prayer_theme', theme);
+  }
+  function toggleTheme() {
+    const isLight = document.documentElement.classList.contains('light');
+    applyTheme(isLight ? 'dark' : 'light');
+  }
+  // Init: stored preference → system preference → dark default
+  const storedTheme = localStorage.getItem('prayer_theme');
+  if (storedTheme) {
+    applyTheme(storedTheme);
+  } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+    applyTheme('light');
+  }
+
+  // ── Date display ──
+  document.getElementById('current-date').textContent = new Date().toLocaleDateString('id-ID', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // ── localStorage city ──
+  const saved = localStorage.getItem('prayer_city');
+  if (saved) document.getElementById('city-input').value = saved;
+
+  // ── Prayer definitions ──
+  const PRAYERS = [
+    { key: 'Fajr',    label: 'Subuh',   arabic: 'Subuh',   icon: sunriseIcon() },
+    { key: 'Dhuhr',   label: 'Dzuhur',  arabic: 'Dzuhur',  icon: sunIcon() },
+    { key: 'Asr',     label: 'Ashar',   arabic: 'Ashar',   icon: cloudSunIcon() },
+    { key: 'Maghrib', label: 'Maghrib', arabic: 'Maghrib', icon: sunsetIcon() },
+    { key: 'Isha',    label: 'Isya',    arabic: 'Isya',    icon: moonIcon() },
+  ];
+
+  let timingsGlobal = null;
+  let countdownInterval = null;
+
+  async function fetchPrayerTimes() {
+    const city = document.getElementById('city-input').value.trim() || 'Kendari';
+    localStorage.setItem('prayer_city', city);
+
+    const list   = document.getElementById('prayer-list');
+    const loader = document.getElementById('loader');
+    const errEl  = document.getElementById('error-msg');
+    const banner = document.getElementById('next-banner');
+
+    list.innerHTML = '';
+    errEl.classList.remove('visible');
+    banner.classList.add('hidden');
+    loader.classList.add('visible');
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    try {
+      const res  = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=Indonesia&method=20`);
+      const data = await res.json();
+      if (data.code !== 200) throw new Error('not found');
+
+      timingsGlobal = data.data.timings;
+      loader.classList.remove('visible');
+      renderPrayers(timingsGlobal);
+      startCountdown(timingsGlobal);
+    } catch {
+      loader.classList.remove('visible');
+      errEl.textContent = `Kota "${city}" tidak ditemukan. Coba nama lain.`;
+      errEl.classList.add('visible');
+    }
+  }
+
+  function renderPrayers(timings) {
+    const list = document.getElementById('prayer-list');
+    const nextIdx = getNextPrayerIndex(timings);
+    list.innerHTML = PRAYERS.map((p, i) => {
+      const isNext = i === nextIdx;
+      const statusText = isNext ? 'Berikutnya' : (isPast(timings[p.key]) ? 'Sudah lewat' : '');
+      return `
+        <div class="prayer-item ${isNext ? 'is-next' : ''}">
+          <div class="prayer-left">
+            <div class="prayer-icon">${p.icon}</div>
+            <div>
+              <p class="prayer-name">${p.label}</p>
+              <p class="prayer-arabic">${p.arabic}</p>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <p class="prayer-time">${timings[p.key]}</p>
+            ${statusText ? `<p class="prayer-status">${statusText}</p>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function isPast(timeStr) {
+    const [h, m] = timeStr.split(':').map(Number);
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes() > h * 60 + m;
+  }
+
+  function getNextPrayerIndex(timings) {
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    for (let i = 0; i < PRAYERS.length; i++) {
+      const [h, m] = timings[PRAYERS[i].key].split(':').map(Number);
+      if (h * 60 + m > nowMin) return i;
+    }
+    return 0;
+  }
+
+  function startCountdown(timings) {
+    const banner   = document.getElementById('next-banner');
+    const nextName = document.getElementById('next-name');
+    const cdEl     = document.getElementById('countdown');
+    function tick() {
+      const now    = new Date();
+      const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+      const idx    = getNextPrayerIndex(timings);
+      const p      = PRAYERS[idx];
+      const [h, m] = timings[p.key].split(':').map(Number);
+      let diff = h * 3600 + m * 60 - nowSec;
+      if (diff < 0) diff += 86400;
+      const hh = String(Math.floor(diff / 3600)).padStart(2, '0');
+      const mm = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+      const ss = String(diff % 60).padStart(2, '0');
+      nextName.textContent = p.arabic;
+      cdEl.textContent     = `${hh}:${mm}:${ss}`;
+      banner.classList.remove('hidden');
+    }
+    tick();
+    countdownInterval = setInterval(tick, 1000);
+  }
+
+  // ── SVG icons ──
+  function sunriseIcon() {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="22"/><polyline points="8 6 12 2 16 6"/></svg>`;
+  }
+  function sunIcon() {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+  }
+  function cloudSunIcon() {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></svg>`;
+  }
+  function sunsetIcon() {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/><line x1="1" y1="18" x2="3" y2="18"/><line x1="21" y1="18" x2="23" y2="18"/><line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/><line x1="23" y1="22" x2="1" y2="22"/><polyline points="16 5 12 9 8 5"/></svg>`;
+  }
+  function moonIcon() {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+  }
+
+  // ── Init ──
+  fetchPrayerTimes();
+</script>
+</body>
+</html>
